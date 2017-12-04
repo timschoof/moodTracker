@@ -16,26 +16,34 @@ library(shiny)
 # Define UI for application
 ui <- fluidPage(
   # App title
-  titlePanel("Mood Tracker"),
-  mainPanel(
-    #img(src='goat.jpg', align = "right"),
-    
-    sliderInput(inputId = "mood", label = "How was your day?",value=3,min=1,max=5),
-    
-    actionButton("submit", "Submit"),
-    
-    textOutput("submitMessage"),
-    
-    uiOutput('table')
+  navbarPage("Mood Tracker",
+             tabPanel("Record",
+                      mainPanel(
+                        #img(src='goat.jpg', align = "right"),
+                        
+                        sliderInput(inputId = "mood", label = "How was your day?",value=3,min=1,max=5),
+                        
+                        actionButton("submit", "Submit"),
+                        
+                        textOutput("submitMessage")
+                      )
+             ),
+             tabPanel("Plot",
+                        sidebarPanel(
+                          selectInput('xcol', 'X Variable', c("date", "day","time.of.day"))
+                        ),
+                      mainPanel(
+                        plotOutput("plot")
+                      )
+             )
   )
 )
-
 
 # Define server logic
 server <- function(input, output){
   
   # specify output directory
-  outputDir<-getwd()
+  outputDir<-"C:/Users/tim/Documents/DataScienceProjects/moodTracker/"
   
   # specify output filename
   fileName <- "MyMood.csv"
@@ -50,7 +58,7 @@ server <- function(input, output){
     md = reactive({
       md <- input$mood
       return(md)
-      })
+    })
     
     hr <- as.numeric(format(Sys.time(),format="%H"))
     if(hr < 12 & hr > 4){
@@ -73,15 +81,22 @@ server <- function(input, output){
     
     # append new entry to loaded data sheet - if data has previously been stored
     if(file.exists(file.path(outputDir,fileName))){
-      datad <- rbind(d,data)
-    } else {
-      datad <- data
+      data <- rbind(d,data)
     }
     
-    write.csv(x=datad,file=file.path(outputDir,fileName),
+    write.csv(x=data,file=file.path(outputDir,fileName),
               row.names=FALSE)
     
     output$submitMessage<-renderText("Thank you!")
+  })
+  
+  # Combine the selected variables into a new data frame
+  selectedData <- reactive({
+    d[, c(input$xcol, "mood")]
+  })
+  
+  output$plot <- renderPlot({
+    plot(selectedData(),ylab="Mood")
   })
 }
 
