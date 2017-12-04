@@ -1,35 +1,44 @@
 # This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
+# the 'Run App' button above. Before you run the app for the first time,
+# specify the directory where you want to save your Mood data and the filename
+# of the csv file you want to store the data in (see the "CHANGE THIS SECTION 
+# BEFORE YOU START" section below). 
 #
-# This app...
+# This app allows you to track your mood over time. You can record your mood, on
+# a scale from 1 to 5 (from frowny to smiley). The data are saved in a locally 
+# stored excel spreadsheet. You can also plot your mood data over time, by day of
+# the week, time of day, or by date. 
 
-# To Do:
-# - https://ipub.com/shiny-crud-app/
-# - pull previously entered data and let people plot it 
-#  (e.g mood over time, by time of day or day of the week)
-# - insert Anna's image (ideally: click on those icons!)
-# - multiple pages via navbar (one for data entry, one for plotting) https://shiny.rstudio.com/gallery/navbar-example.html
-# - make it look nice
+# NB: The app runs locally on your own computer because you don't necessarily 
+# want other people to know what mood you're in!
 
 library(shiny)
 
+#### CHANGE THIS SECTION BEFORE YOU START ####
+# specify output directory
+outputDir<-"C:/Users/tim/Documents/DataScienceProjects/moodTracker/"
+# specify output filename
+fileName <- "MyMood.csv"
+##############################################
+
 # Define UI for application
 ui <- fluidPage(
-  # App title
   navbarPage("Mood Tracker",
              tabPanel("Record",
                       mainPanel(
-                        #img(src='goat.jpg', align = "right"),
-                        
+                        # slider from 1 to 5 used to indicate mood
                         sliderInput(inputId = "mood", label = "How was your day?",value=3,min=1,max=5),
                         
+                        # submit button
                         actionButton("submit", "Submit"),
                         
+                        # message will be printed once mood has been submitted
                         textOutput("submitMessage")
                       )
              ),
              tabPanel("Plot",
                         sidebarPanel(
+                          # select the variable along the x-axis (y-axis is mood score)
                           selectInput('xcol', 'X Variable', c("date", "day","time.of.day"))
                         ),
                       mainPanel(
@@ -42,25 +51,23 @@ ui <- fluidPage(
 # Define server logic
 server <- function(input, output){
   
-  # specify output directory
-  outputDir<-"C:/Users/tim/Documents/DataScienceProjects/moodTracker/"
-  
-  # specify output filename
-  fileName <- "MyMood.csv"
-  
   # read data - if file exists
   if(file.exists(file.path(outputDir,fileName))){
     d<-read.csv(file.path(outputDir,fileName),header=TRUE)
   }
   
+  # For recording data
   # execute when user clicks 'submit' button
   observeEvent(input$submit, {
+    # extract submitted mood score
     md = reactive({
       md <- input$mood
       return(md)
     })
     
+    # record the hour at which mood was submitted
     hr <- as.numeric(format(Sys.time(),format="%H"))
+    # infer the time of day based on the hour
     if(hr < 12 & hr > 4){
       t.o.d.<- "morning"
     }else if(hr < 18 & hr >= 12){
@@ -71,6 +78,7 @@ server <- function(input, output){
       t.o.d.<-"night"
     }
     
+    # create data frame to be saved as csv file
     data<-data.frame(
       "date" = format(Sys.time(), format="%d %b %Y"),
       "day" = format(Sys.time(), format="%A"),
@@ -84,17 +92,21 @@ server <- function(input, output){
       data <- rbind(d,data)
     }
     
+    # write data into a csv file
     write.csv(x=data,file=file.path(outputDir,fileName),
               row.names=FALSE)
     
+    # print message indicating data has been recorded
     output$submitMessage<-renderText("Thank you!")
   })
   
-  # Combine the selected variables into a new data frame
+  # For plotting
+  # Combine variables to be plotted into a new data frame
   selectedData <- reactive({
     d[, c(input$xcol, "mood")]
   })
   
+  # create the plot
   output$plot <- renderPlot({
     plot(selectedData(),ylab="Mood")
   })
