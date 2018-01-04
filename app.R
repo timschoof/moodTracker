@@ -82,11 +82,11 @@ server <- function(input, output){
     
     # append new entry to loaded data sheet - if data has previously been stored
     if(file.exists(here(fileName))){
-      data <- rbind(d,data)
+      d <- rbind(d,data)
     }
     
     # write data into a csv file
-    write.csv(x=data,file=here(fileName),row.names=FALSE)
+    write.csv(x=d,file=here(fileName),row.names=FALSE)
     
     # print message indicating data has been recorded
     output$submitMessage<-renderText("Thank you!")
@@ -95,6 +95,10 @@ server <- function(input, output){
   # For plotting
   # Combine variables to be plotted into a new data frame
   selectedData <- reactive({
+    # read in most up to date data file
+    if(file.exists(here(fileName))){
+      d<-read.csv(here(fileName),header=TRUE)
+    }
     d[, c(input$xcol, "mood")]
   })
   
