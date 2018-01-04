@@ -1,8 +1,5 @@
 # This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above. Before you run the app for the first time,
-# specify the directory where you want to save your Mood data and the filename
-# of the csv file you want to store the data in (see the "CHANGE THIS SECTION 
-# BEFORE YOU START" section below). 
+# the 'Run App' button above. 
 #
 # This app allows you to track your mood over time. You can record your mood, on
 # a scale from 1 to 5 (from frowny to smiley). The data are saved in a locally 
@@ -14,12 +11,8 @@
 
 library(shiny)
 
-#### CHANGE THIS SECTION BEFORE YOU START ####
-# specify output directory
-outputDir<-"C:/Users/tim/Documents/DataScienceProjects/moodTracker/"
 # specify output filename
 fileName <- "MyMood.csv"
-##############################################
 
 # Define UI for application
 ui <- fluidPage(
@@ -52,8 +45,8 @@ ui <- fluidPage(
 server <- function(input, output){
   
   # read data - if file exists
-  if(file.exists(file.path(outputDir,fileName))){
-    d<-read.csv(file.path(outputDir,fileName),header=TRUE)
+  if(file.exists(here(fileName))){
+    d<-read.csv(here(fileName),header=TRUE)
   }
   
   # For recording data
@@ -88,13 +81,12 @@ server <- function(input, output){
     )
     
     # append new entry to loaded data sheet - if data has previously been stored
-    if(file.exists(file.path(outputDir,fileName))){
+    if(file.exists(here(fileName))){
       data <- rbind(d,data)
     }
     
     # write data into a csv file
-    write.csv(x=data,file=file.path(outputDir,fileName),
-              row.names=FALSE)
+    write.csv(x=data,file=here(fileName),row.names=FALSE)
     
     # print message indicating data has been recorded
     output$submitMessage<-renderText("Thank you!")
