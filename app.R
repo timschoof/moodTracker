@@ -10,6 +10,7 @@
 # want other people to know what mood you're in!
 
 library(shiny)
+library(here)
 
 # specify output filename
 fileName <- "MyMood.csv"
@@ -99,7 +100,18 @@ server <- function(input, output){
     if(file.exists(here(fileName))){
       d<-read.csv(here(fileName),header=TRUE)
     }
-    d[, c(input$xcol, "mood")]
+    # create subset of data
+    d<-d[, c(input$xcol, "mood")]
+    # reorder factor levels (e.g. days of the week should not be alphabetical)
+    if(input$xcol == "day"){
+      d$day <- factor(d$day, 
+                      levels = c("Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
+    } else if(input$xcol == "time.of.day"){
+      d$time.of.day <- factor(d$time.of.day,
+                              levels = c("morning","afternoon","evening","night"))
+    } else if(input$xcol == "date"){
+      d$date<-as.Date(d$date, format="%d %b %Y")
+    }
   })
   
   # create the plot
